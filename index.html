@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dementia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="canvas-wrapper">
+        <canvas id="artCanvas"></canvas>
+
+        <div id="controls" class="controls hidden">
+            <h2>Controls</h2>
+            <div class="control-group">
+                <button id="prevBtn">← Prev</button>
+                <button id="nextBtn">Next →</button>
+            </div>
+            <div class="control-group">
+                <label for="datePicker">Date:</label>
+                <input type="date" id="datePicker">
+            </div>
+            <div class="info">
+                <p>Day: <span id="currentDay"></span></p>
+                <p>Month: <span id="daysInMonth"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="hint">Click anywhere to start | Press 'C' for controls | Press 'S' to toggle sound</div>
+
+    <script src="sound-system.js"></script>
+    <script src="shader-calendar.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
