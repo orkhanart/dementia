@@ -72,7 +72,7 @@ terry/
 
 ## Credits
 
-**Artwork by**: [SeeThrough](https://github.com/SeeThrough)
+**Artwork by**: SeeThrough
 **Developed by**: [Orkhan](https://github.com/orkhanart)
 
 Shader system inspired by REVERIES project.
