@@ -15,7 +15,9 @@ varying vec4 vUV;
 
 void main() {
     gl_Position = vec4(position.xy, 0.0, 1.0);
-    vUV = vec4(position.xy*0.5+0.5, position.xy*0.5+0.5);
+    vec2 uv_coord = position.xy*0.5+0.5;
+    uv_coord.y = 1.0 - uv_coord.y; // Flip Y to correct orientation
+    vUV = vec4(uv_coord, uv_coord);
 }
 `;
 
@@ -388,7 +390,7 @@ class ShaderCalendar {
             this.setupFramebuffers();
 
             // Re-set Y-flip after context restore
-            this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+            this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
 
             if (this.currentImage) {
                 this.createTexture(this.currentImage);
@@ -411,8 +413,8 @@ class ShaderCalendar {
         this.setupGeometry();
         this.setupFramebuffers();
 
-        // Set Y-flip globally for all texture uploads
-        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+        // Don't flip Y - keep images right-side up
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
     }
 
     compileShader(source, type) {
