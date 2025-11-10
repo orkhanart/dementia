@@ -16,8 +16,6 @@ varying vec4 vUV;
 void main() {
     gl_Position = vec4(position.xy, 0.0, 1.0);
     vUV = vec4(position.xy*0.5+0.5, position.xy*0.5+0.5);
-    vUV.y = 1.0 - vUV.y; // Fix orientation
-    vUV.z = 1.0 - vUV.z;
 }
 `;
 
@@ -366,9 +364,35 @@ class ShaderCalendar {
         this.currentImage = null;
         this.seed = Math.random();
 
+        // Handle WebGL context loss/restore
+        this.canvas.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            console.warn('WebGL context lost');
+            this.stopAnimation();
+        });
+
+        this.canvas.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL context restored, reinitializing...');
+            this.setupPrograms();
+            this.setupGeometry();
+            this.setupFramebuffers();
+
+            // Re-set Y-flip after context restore
+            this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+
+            if (this.currentImage) {
+                this.createTexture(this.currentImage);
+                this.initialize();
+                this.startAnimation();
+            }
+        });
+
         this.setupPrograms();
         this.setupGeometry();
         this.setupFramebuffers();
+
+        // Set Y-flip globally for all texture uploads
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
     }
 
     compileShader(source, type) {
@@ -510,6 +534,8 @@ class ShaderCalendar {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        // Upload texture (Y-flip is set globally in constructor)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
 
         const size = Math.min(img.width, img.height);

@@ -81,18 +81,27 @@ async function displayImage(day) {
 async function updateUI() {
     const { year, month, currentDay, daysInMonth } = getCurrentMonthInfo();
 
+    // Get max day reached
+    const savedMaxDay = localStorage.getItem('dementiaMaxDay');
+    const maxDayReached = savedMaxDay ? parseInt(savedMaxDay) : 0;
+
     // Update info display
     currentDaySpan.textContent = selectedDay;
     daysInMonthSpan.textContent = daysInMonth;
 
-    // Update date picker - TESTING MODE: Allow all 31 days
+    // Update date picker - can only go forward from max day reached
     datePicker.value = formatDateForInput(year, month, selectedDay);
-    datePicker.max = formatDateForInput(year, month, 31); // Allow all days for testing
-    datePicker.min = formatDateForInput(year, month, 1);
+    datePicker.max = formatDateForInput(year, month, 31);
+    datePicker.min = formatDateForInput(year, month, maxDayReached > 0 ? maxDayReached : 1);
 
-    // Update button states - TESTING MODE: Allow navigation to all days
-    prevBtn.disabled = selectedDay <= 1;
-    nextBtn.disabled = selectedDay >= 31; // Allow up to day 31 for testing
+    // Update button states - can only go forward, never backwards
+    prevBtn.disabled = true; // Always disabled - no going back in time
+    nextBtn.disabled = selectedDay >= 31;
+
+    // Save the max day reached (for persistence)
+    if (selectedDay > maxDayReached) {
+        localStorage.setItem('dementiaMaxDay', selectedDay.toString());
+    }
 
     // Display image with shader effect (await to ensure it loads)
     await displayImage(selectedDay);
@@ -118,12 +127,17 @@ function goToDate(dateString) {
     const selectedDate = new Date(dateString);
     const { year, month } = getCurrentMonthInfo();
 
-    // TESTING MODE: Allow any date 1-31 in current month
+    // Get max day reached - can only go forward
+    const savedMaxDay = localStorage.getItem('dementiaMaxDay');
+    const maxDayReached = savedMaxDay ? parseInt(savedMaxDay) : 0;
+    const requestedDay = selectedDate.getDate();
+
+    // Can only select dates from max day reached onwards
     if (selectedDate.getFullYear() === year &&
         selectedDate.getMonth() === month &&
-        selectedDate.getDate() >= 1 &&
-        selectedDate.getDate() <= 31) {
-        selectedDay = selectedDate.getDate();
+        requestedDay >= maxDayReached &&
+        requestedDay <= 31) {
+        selectedDay = requestedDay;
         updateUI();
     }
 }
@@ -200,15 +214,23 @@ async function init() {
 
     const { currentDay, daysInMonth } = getCurrentMonthInfo();
 
-    // On first load, show current day's image
-    selectedDay = currentDay;
+    // Check if we have a saved "max day reached" from previous sessions
+    const savedMaxDay = localStorage.getItem('dementiaMaxDay');
+    const maxDayReached = savedMaxDay ? parseInt(savedMaxDay) : 0;
 
-    // But respect month limits (e.g., if it's day 31 but month has 30 days)
+    // Progress through days naturally, but never go backwards
+    // Once Day 31 (or last day) is reached, stay there forever
+    selectedDay = Math.max(currentDay, maxDayReached);
+
+    // Cap at last day of current month (in case month has fewer than 31 days)
     if (selectedDay > daysInMonth) {
         selectedDay = daysInMonth;
     }
 
-    console.log(`Current day: ${selectedDay} / ${daysInMonth}`);
+    // Save the highest day reached
+    localStorage.setItem('dementiaMaxDay', selectedDay.toString());
+
+    console.log(`Current day: ${selectedDay} / ${daysInMonth} (max reached: ${maxDayReached})`);
 
     // Set canvas initial size
     canvas.width = 800;
