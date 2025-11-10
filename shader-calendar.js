@@ -68,8 +68,8 @@ uniform float size;
 
 vec4 blur(sampler2D tex, vec2 uv, vec2 res) {
     const float Pi2 = 6.28318530718;
-    const int Directions = 16;
-    const int Quality = 3;
+    const int Directions = 8;  // Reduced from 16 to 8
+    const int Quality = 2;      // Reduced from 3 to 2
     float Size = size;
 
     vec2 radius = Size / res;
@@ -132,8 +132,8 @@ vec2 uv_norm(vec2 uv, vec2 res, vec2 tex_res) {
 
 vec4 blur(sampler2D tex, vec2 uv, vec2 res) {
     const float Pi2 = 6.28318530718;
-    const int Directions = 16;
-    const int Quality = 3;
+    const int Directions = 8;  // Reduced from 16 to 8
+    const int Quality = 2;      // Reduced from 3 to 2
     float Size = blur_size;
 
     vec2 radius = Size / res;
@@ -297,8 +297,8 @@ uniform float blur_size;
 
 vec4 blur(sampler2D tex, vec2 uv, vec2 res) {
     const float Pi2 = 6.28318530718;
-    const int Directions = 16;
-    const int Quality = 3;
+    const int Directions = 8;  // Reduced from 16 to 8
+    const int Quality = 2;      // Reduced from 3 to 2
     float Size = blur_size;
 
     vec2 radius = Size / res;
@@ -350,7 +350,9 @@ class ShaderCalendar {
         this.canvas = document.getElementById(canvasId);
         this.gl = this.canvas.getContext('webgl', {
             preserveDrawingBuffer: true,
-            premultipliedAlpha: false
+            premultipliedAlpha: false,
+            powerPreference: 'low-power', // Prefer energy efficiency
+            antialias: false // Disable antialiasing for better performance
         });
 
         if (!this.gl) {
@@ -363,6 +365,14 @@ class ShaderCalendar {
         this.currentDay = 1;
         this.currentImage = null;
         this.seed = Math.random();
+
+        // FPS limiting
+        this.targetFPS = 30; // Reduced from 60fps
+        this.frameInterval = 1000 / this.targetFPS;
+        this.lastFrameTime = 0;
+
+        // Visibility handling
+        this.isVisible = true;
 
         // Handle WebGL context loss/restore
         this.canvas.addEventListener('webglcontextlost', (e) => {
@@ -384,6 +394,16 @@ class ShaderCalendar {
                 this.createTexture(this.currentImage);
                 this.initialize();
                 this.startAnimation();
+            }
+        });
+
+        // Pause animation when window is not visible
+        document.addEventListener('visibilitychange', () => {
+            this.isVisible = !document.hidden;
+            if (!this.isVisible) {
+                console.log('Page hidden, pausing animation');
+            } else {
+                console.log('Page visible, resuming animation');
             }
         });
 
@@ -538,7 +558,10 @@ class ShaderCalendar {
         // Upload texture (Y-flip is set globally in constructor)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
 
-        const size = Math.min(img.width, img.height);
+        // Reduce resolution for better performance - cap at 800px
+        let size = Math.min(img.width, img.height);
+        size = Math.min(size, 800);
+
         this.canvas.width = size;
         this.canvas.height = size;
         this.width = size;
@@ -722,11 +745,23 @@ class ShaderCalendar {
     }
 
     startAnimation() {
-        const animate = () => {
-            this.render();
+        const animate = (currentTime) => {
+            // Skip rendering if window is not visible
+            if (!this.isVisible) {
+                this.animationId = requestAnimationFrame(animate);
+                return;
+            }
+
+            // FPS throttling
+            const elapsed = currentTime - this.lastFrameTime;
+            if (elapsed > this.frameInterval) {
+                this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
+                this.render();
+            }
+
             this.animationId = requestAnimationFrame(animate);
         };
-        animate();
+        this.animationId = requestAnimationFrame(animate);
     }
 
     stopAnimation() {
