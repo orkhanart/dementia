@@ -166,7 +166,12 @@ datePicker.addEventListener('change', (e) => {
 // Auto-start sound on first user interaction
 let soundAutoStarted = false;
 
-async function autoStartSound() {
+async function autoStartSound(event) {
+    // Don't auto-start if user pressed 'S' key (they want manual control)
+    if (event.type === 'keydown' && event.key.toLowerCase() === 's') {
+        return;
+    }
+
     if (soundAutoStarted) return;
 
     soundAutoStarted = true;

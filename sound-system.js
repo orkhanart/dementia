@@ -316,7 +316,7 @@ class DementiaSound {
             );
 
             // Update dry/wet mix
-            const volume = 0.15 / this.baseFrequencies.length;
+            const volume = 0.06 / this.padFrequencies.length;
             oscData.gain.gain.linearRampToValueAtTime(
                 volume * params.dryGain,
                 now + transitionTime
